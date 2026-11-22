@@ -1,0 +1,10 @@
+// use prisma-8
+// Contract inferred from the live database schema. Edit as needed, then run `prisma contract emit`.
+
+model TableName {
+  id         Int           @id(map: "table_name_pkey") @default(autoincrement())
+  createTime Date?         @map("create_time")
+  name       VarChar(255)?
+
+  @@map("table_name")
+}
