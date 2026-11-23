@@ -1,25 +1,18 @@
 import "dotenv/config";
 import express from "express";
-import indexRouter from "./src/routes/index.routes";
-import cors from "cors"
-
+import cors from "cors";
+import indexRouter from "./routes/index.routes.js";
+import { notFoundHandler } from "./middlewares/not-found.middleware.js";
 
 const app = express();
 
 app.use(cors());
-
-
-
-
-
-
-//middleware for json
 app.use(express.json());
-
-//routes
 app.use("/", indexRouter);
+app.use(notFoundHandler);
 
-//listening port
-app.listen(process.env.PORT,()=>{
-    console.log(`App running on PORT ${process.env.PORT}`)
+const port = Number(process.env.PORT ?? 3000);
+
+app.listen(port, () => {
+  console.log(`App running on port ${port}`);
 })

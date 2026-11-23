@@ -3,6 +3,35 @@
 
 Guía de configuración de un proyecto backend utilizando **Node.js, TypeScript, Express, PostgreSQL y Prisma ORM 8**.
 
+## Estructura y ejecución
+
+```text
+src/
+├── app.ts
+├── config/
+├── controllers/
+├── db/
+├── interfaces/
+├── middlewares/
+├── prisma/
+├── repository/
+└── routes/
+```
+
+Configurar las variables de entorno y arrancar la API:
+
+```bash
+cp .env.example .env
+npm run dev
+```
+
+La API ofrece `GET /` como ruta de bienvenida y `GET /health` para comprobar que está activa. Las rutas inexistentes responden con HTTP 404. Para compilar y ejecutar la versión de producción:
+
+```bash
+npm run build
+npm start
+```
+
 ## 1. Inicializar el proyecto
 
 Crear el proyecto e inicializar `package.json`:

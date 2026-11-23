@@ -1,8 +1,8 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import * as user_repository from "../repository/user.repository";
+import * as user_repository from "../repository/user.repository.js";
 import bcrypt from "bcryptjs";
-import { User_interface as User } from "../interfaces/user.interface";
+import type { User_interface as User } from "../interfaces/user.interface.js";
 
 passport.use(
   new LocalStrategy(async (username, password, done) => {

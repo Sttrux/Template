@@ -1,5 +1,5 @@
-import { User_interface as User } from "../interfaces/user.interface";
-import { db } from "../prisma/db";
+import type { User_interface as User } from "../interfaces/user.interface.js";
+import { db } from "../prisma/db.js";
 
 export async function getUserByUsername(
   username: string,
