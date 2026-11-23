@@ -35,10 +35,12 @@ export async function updatePost(
   id: number,
   changes: { title?: string; content?: string; published?: boolean },
 ) {
-  return db.orm.public.Posts.where({ id }).update({
-    ...changes,
+  const update = {
     ...(changes.title === undefined ? {} : { title: toVarchar(changes.title, 255) }),
-  });
+    ...(changes.content === undefined ? {} : { content: changes.content }),
+    ...(changes.published === undefined ? {} : { published: changes.published }),
+  };
+  return db.orm.public.Posts.where({ id }).update(update);
 }
 
 export async function deletePost(id: number) {
