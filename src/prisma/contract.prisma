@@ -2,11 +2,11 @@
 
 model Users {
   id                 Int            @id @default(autoincrement())
-  username           String         @unique
-  email              String         @unique
+  username           VarChar(32)    @unique
+  email              VarChar(254)   @unique
   passwordHash       String         @map("password_hash")
-  createdAt          Timestamp      @default(now()) @map("created_at")
-  updatedAt          Timestamp      @default(now()) @map("updated_at")
+  createdAt          TimestampString @default(now()) @map("created_at")
+  updatedAt          TimestampString @default(now()) @map("updated_at")
   userRoles          UserRoles[]
   posts              Posts[]
   comments           Comments[]
@@ -18,7 +18,7 @@ model Users {
 
 model Roles {
   id              Int               @id @default(autoincrement())
-  name            String            @unique
+  name            VarChar(50)       @unique
   description     String
   userRoles       UserRoles[]
   rolePermissions RolePermissions[]
@@ -29,7 +29,7 @@ model Roles {
 
 model Permissions {
   id              Int               @id @default(autoincrement())
-  name            String            @unique
+  name            VarChar(100)      @unique
   description     String
   rolePermissions RolePermissions[]
 
@@ -39,7 +39,7 @@ model Permissions {
 model UserRoles {
   userId     Int       @map("user_id")
   roleId     Int       @map("role_id")
-  assignedAt Timestamp @default(now()) @map("assigned_at")
+  assignedAt TimestampString @default(now()) @map("assigned_at")
   user       Users     @relation(fields: [userId], references: [id])
   role       Roles     @relation(fields: [roleId], references: [id])
 
@@ -62,27 +62,29 @@ model RoleAuditLogs {
   actorUserId  Int?      @map("actor_user_id")
   targetUserId Int?      @map("target_user_id")
   roleId       Int?
-  action       String
-  changedAt    Timestamp @default(now()) @map("changed_at")
+  action       VarChar(20)
+  changedAt    TimestampString @default(now()) @map("changed_at")
   actor        Users?    @relation("RoleAuditActor", fields: [actorUserId], references: [id])
   target       Users?    @relation("RoleAuditTarget", fields: [targetUserId], references: [id])
   role         Roles?    @relation(fields: [roleId], references: [id])
 
+  @@index([targetUserId, changedAt], map: "role_audit_target_changed_idx")
   @@map("role_audit_logs")
 }
 
 model Posts {
   id        Int       @id @default(autoincrement())
   authorId  Int       @map("author_id")
-  title     String
+  title     VarChar(255)
   content   String
   likes     Int       @default(0)
   published Boolean   @default(false)
-  createdAt Timestamp @default(now()) @map("created_at")
-  updatedAt Timestamp @default(now()) @map("updated_at")
+  createdAt TimestampString @default(now()) @map("created_at")
+  updatedAt TimestampString @default(now()) @map("updated_at")
   comments  Comments[]
   author    Users     @relation(fields: [authorId], references: [id])
 
+  @@index([published, createdAt], map: "posts_published_created_idx")
   @@map("posts")
 }
 
@@ -91,7 +93,7 @@ model Comments {
   authorId  Int       @map("author_id")
   postId    Int       @map("post_id")
   content   String
-  createdAt Timestamp @default(now()) @map("created_at")
+  createdAt TimestampString @default(now()) @map("created_at")
   author    Users     @relation(fields: [authorId], references: [id])
   post      Posts     @relation(fields: [postId], references: [id])
 
@@ -99,9 +101,10 @@ model Comments {
 }
 
 model Sessions {
-  sid    String    @id
+  sid    VarChar(255) @id
   sess   Json
-  expire Timestamp
+  expire TimestampString
 
+  @@index([expire], map: "sessions_expire_idx")
   @@map("sessions")
 }

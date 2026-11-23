@@ -18,7 +18,10 @@ const app = express();
 
 if (env.TRUST_PROXY_HOPS > 0) app.set("trust proxy", env.TRUST_PROXY_HOPS);
 app.use(requestLogger);
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: env.NODE_ENV === "production" ? undefined : false,
+  strictTransportSecurity: env.NODE_ENV === "production" ? undefined : false,
+}));
 app.use(cors({
   origin: env.CORS_ORIGINS,
   credentials: true,

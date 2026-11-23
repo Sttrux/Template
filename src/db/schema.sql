@@ -63,14 +63,14 @@ CREATE TABLE IF NOT EXISTS comments (
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
-    sid VARCHAR NOT NULL PRIMARY KEY,
+    sid VARCHAR(255) NOT NULL PRIMARY KEY,
     sess JSON NOT NULL,
     expire TIMESTAMP(6) NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS sessions_expire_idx ON sessions (expire);
-CREATE INDEX IF NOT EXISTS posts_published_created_idx ON posts (published, created_at DESC);
-CREATE INDEX IF NOT EXISTS role_audit_target_changed_idx ON role_audit_logs (target_user_id, changed_at DESC);
+CREATE INDEX IF NOT EXISTS posts_published_created_idx ON posts (published, created_at);
+CREATE INDEX IF NOT EXISTS role_audit_target_changed_idx ON role_audit_logs (target_user_id, changed_at);
 
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER

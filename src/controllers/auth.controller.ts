@@ -4,6 +4,7 @@ import { env } from "../config/env.js";
 import passport from "../config/passport.js";
 import { createAccessToken, registerUser, verifyCredentials } from "../services/auth.service.js";
 import { AppError } from "../utils/app-error.js";
+import { createCsrfToken } from "../utils/csrf.js";
 
 interface LoginInput {
   login: string;
@@ -33,7 +34,15 @@ export const authenticateLocal: RequestHandler = (req, res, next) => {
 
 export const sessionLogin: RequestHandler = (req, res) => {
   if (!req.user) throw new AppError(401, "Invalid login or password");
-  res.json({ user: req.user });
+  const csrfToken = createCsrfToken();
+  req.session.csrfToken = csrfToken;
+  res.json({ user: req.user, csrfToken });
+};
+
+export const sessionCsrf: RequestHandler = (req, res) => {
+  const csrfToken = createCsrfToken();
+  req.session.csrfToken = csrfToken;
+  res.json({ csrfToken });
 };
 
 export const sessionLogout: RequestHandler = (req, res, next) => {

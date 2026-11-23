@@ -1,5 +1,6 @@
 import type { AuthenticatedUser, UserCredentials } from "../interfaces/auth.interface.js";
 import { db } from "../prisma/db.js";
+import { toVarchar } from "../utils/varchar.js";
 
 async function findLoadedUserById(id: number) {
   return db.orm.public.Users.where({ id })
@@ -43,27 +44,31 @@ export async function findCredentialsByLogin(
   login: string,
 ): Promise<UserCredentials | null> {
   const normalizedLogin = login.trim().toLowerCase();
-  const user = await db.orm.public.Users.where({ username: normalizedLogin })
-    .include("userRoles", (userRole) =>
-      userRole.include("role", (role) =>
-        role.include("rolePermissions", (rolePermission) =>
-          rolePermission.include("permission"),
+  const user = [...normalizedLogin].length <= 32
+    ? await db.orm.public.Users.where({ username: toVarchar(normalizedLogin, 32) })
+      .include("userRoles", (userRole) =>
+        userRole.include("role", (role) =>
+          role.include("rolePermissions", (rolePermission) =>
+            rolePermission.include("permission"),
+          ),
         ),
-      ),
-    )
-    .first();
+      )
+      .first()
+    : null;
 
   if (user) return mapCredentials(user);
 
-  const userByEmail = await db.orm.public.Users.where({ email: normalizedLogin })
-    .include("userRoles", (userRole) =>
-      userRole.include("role", (role) =>
-        role.include("rolePermissions", (rolePermission) =>
-          rolePermission.include("permission"),
+  const userByEmail = [...normalizedLogin].length <= 254
+    ? await db.orm.public.Users.where({ email: toVarchar(normalizedLogin, 254) })
+      .include("userRoles", (userRole) =>
+        userRole.include("role", (role) =>
+          role.include("rolePermissions", (rolePermission) =>
+            rolePermission.include("permission"),
+          ),
         ),
-      ),
-    )
-    .first();
+      )
+      .first()
+    : null;
 
   return userByEmail ? mapCredentials(userByEmail) : null;
 }
@@ -74,7 +79,9 @@ export async function findAuthUserById(id: number): Promise<AuthenticatedUser | 
 }
 
 export async function userExistsByEmail(email: string): Promise<boolean> {
-  const user = await db.orm.public.Users.where({ email: email.toLowerCase() }).first();
+  const user = await db.orm.public.Users.where({
+    email: toVarchar(email.toLowerCase(), 254),
+  }).first();
   return user !== null;
 }
 
@@ -84,12 +91,12 @@ export async function createUserWithDefaultRole(input: {
   passwordHash: string;
 }): Promise<AuthenticatedUser> {
   const userId = await db.transaction(async (tx) => {
-    const defaultRole = await tx.orm.public.Roles.where({ name: "user" }).first();
+    const defaultRole = await tx.orm.public.Roles.where({ name: toVarchar("user", 50) }).first();
     if (!defaultRole) throw new Error("The default user role is missing from the database");
 
     const user = await tx.orm.public.Users.create({
-      username: input.username.toLowerCase(),
-      email: input.email.toLowerCase(),
+      username: toVarchar(input.username.toLowerCase(), 32),
+      email: toVarchar(input.email.toLowerCase(), 254),
       passwordHash: input.passwordHash,
     });
 

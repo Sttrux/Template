@@ -21,6 +21,9 @@
   },
   "homepage": "https://github.com/Sttrux/Template#readme",
   "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
   "dependencies": {
     "@prisma/orm-postgres": "^8.0.0-rc.12",
     "bcryptjs": "^3.0.3",

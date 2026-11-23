@@ -1,4 +1,5 @@
 import { db } from "../prisma/db.js";
+import { toVarchar } from "../utils/varchar.js";
 
 export async function listPublishedPosts() {
   return db.orm.public.Posts
@@ -24,14 +25,20 @@ export async function createPost(input: {
   content: string;
   published: boolean;
 }) {
-  return db.orm.public.Posts.create(input);
+  return db.orm.public.Posts.create({
+    ...input,
+    title: toVarchar(input.title, 255),
+  });
 }
 
 export async function updatePost(
   id: number,
   changes: { title?: string; content?: string; published?: boolean },
 ) {
-  return db.orm.public.Posts.where({ id }).update(changes);
+  return db.orm.public.Posts.where({ id }).update({
+    ...changes,
+    ...(changes.title === undefined ? {} : { title: toVarchar(changes.title, 255) }),
+  });
 }
 
 export async function deletePost(id: number) {

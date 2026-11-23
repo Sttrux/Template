@@ -6,7 +6,7 @@ export const registerValidators = [
     .trim()
     .isLength({ min: 3, max: 32 })
     .matches(/^[a-zA-Z0-9._-]+$/),
-  body("email").isEmail().normalizeEmail(),
+  body("email").isEmail().isLength({ max: 254 }).normalizeEmail(),
   body("password").isString().isLength({ min: 12, max: 128 }),
 ];
 

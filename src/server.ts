@@ -16,17 +16,25 @@ async function shutdown(signal: NodeJS.Signals) {
   isShuttingDown = true;
   logInfo("server_shutting_down", { signal });
 
+  let shutdownFailed = false;
   try {
     await new Promise<void>((resolve, reject) => {
       server.close((error) => error ? reject(error) : resolve());
     });
-    sessionStore.close();
-    await Promise.all([pool.end(), db.close()]);
-    process.exitCode = 0;
   } catch (error) {
     logError("server_shutdown_error", error);
-    process.exitCode = 1;
+    shutdownFailed = true;
   }
+
+  sessionStore.close();
+  const closeResults = await Promise.allSettled([pool.end(), db.close()]);
+  for (const result of closeResults) {
+    if (result.status === "rejected") {
+      logError("database_shutdown_error", result.reason);
+      shutdownFailed = true;
+    }
+  }
+  process.exitCode = shutdownFailed ? 1 : 0;
 }
 
 process.once("SIGINT", () => void shutdown("SIGINT"));

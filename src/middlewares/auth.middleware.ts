@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 import { findAuthUserById } from "../repository/user.repository.js";
 import { AppError } from "../utils/app-error.js";
+import { requireCsrfToken } from "./csrf.middleware.js";
 
 export const authenticateJWT: RequestHandler = async (req, _res, next) => {
   const authorization = req.get("authorization");
@@ -42,10 +43,17 @@ export const authenticateSession: RequestHandler = (req, _res, next) => {
 };
 
 export const authenticateEither: RequestHandler = (req, res, next) => {
-  if (/^Bearer\s+/i.test(req.get("authorization") ?? "")) {
+  const authorization = req.get("authorization");
+  if (authorization) {
+    if (!/^Bearer\s+/i.test(authorization)) {
+      return next(new AppError(401, "Unsupported authorization scheme"));
+    }
     return authenticateJWT(req, res, next);
   }
-  return authenticateSession(req, res, next);
+  return authenticateSession(req, res, (error?: unknown) => {
+    if (error) return next(error);
+    return requireCsrfToken(req, res, next);
+  });
 };
 
 export function requirePermission(permission: string): RequestHandler {

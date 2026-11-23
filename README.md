@@ -23,7 +23,8 @@ src/
 
 ## Instalación y configuración
 
-Requiere Node.js 22 o posterior y PostgreSQL.
+Requiere Node.js 22.18 o posterior y PostgreSQL.
+El contrato Prisma usa `TimestampString` para que las fechas se intercambien como texto de PostgreSQL, sin depender de `Temporal` global en Node.js 22/24.
 
 ```bash
 npm ci
@@ -48,8 +49,15 @@ npm run contract:emit
 
 Arranca en desarrollo o compila y ejecuta la versión de producción:
 
+Para desarrollo:
+
 ```bash
 npm run dev
+```
+
+Para producción:
+
+```bash
 npm run build
 npm start
 ```
@@ -60,18 +68,22 @@ Los dos mecanismos están separados para que cada cliente elija el flujo adecuad
 
 ### Passport Local con sesión
 
-`POST /api/auth/session/login` recibe `login` (nombre de usuario o correo) y `password`; el servidor persiste la sesión en PostgreSQL y responde con cookie `httpOnly`.
+Primero solicita un token CSRF en `GET /api/auth/session/csrf`. Después, `POST /api/auth/session/login` recibe `login` (nombre de usuario o correo), `password` y el encabezado `x-csrf-token`; el servidor persiste la sesión en PostgreSQL y responde con cookie `httpOnly` y un nuevo token CSRF.
 
 ```http
 POST /api/auth/session/login
 Content-Type: application/json
+x-csrf-token: <token-de-GET-session-csrf>
 
 {"login":"usuario","password":"una-contraseña-larga"}
 ```
 
+- `GET /api/auth/session/csrf`: entrega el token CSRF inicial; envíalo en `x-csrf-token` al iniciar sesión.
 - `POST /api/auth/register`: crea una cuenta con rol `user` por defecto.
 - `GET /api/auth/session/me`: devuelve la identidad autenticada por sesión.
-- `POST /api/auth/session/logout`: cierra la sesión.
+- `POST /api/auth/session/logout`: cierra la sesión; requiere el token CSRF recibido al iniciar sesión.
+
+Las rutas de escritura autenticadas por cookie también requieren `x-csrf-token`. Las peticiones que autentican con Bearer JWT no usan protección CSRF.
 
 En un frontend de otro origen, configura `CORS_ORIGINS` y envía la cookie con credenciales. En producción, sirve la API sobre HTTPS.
 
@@ -115,11 +127,13 @@ Las rutas protegidas de publicaciones y administración aceptan una sesión Pass
 Para conceder el primer rol `admin`, registra primero una cuenta y ejecuta una asignación de bootstrap desde una conexión administrativa a PostgreSQL. Hazlo solo una vez y limita el acceso a la consola de base de datos:
 
 ```sql
+BEGIN;
 INSERT INTO user_roles (user_id, role_id)
 SELECT users.id, roles.id
 FROM users CROSS JOIN roles
 WHERE users.username = lower('mi-admin') AND roles.name = 'admin'
 ON CONFLICT DO NOTHING;
+COMMIT;
 ```
 
 ## Esquema PostgreSQL: transacciones, triggers y procedimientos
@@ -133,6 +147,15 @@ El esquema incluye:
 - `create_user_with_default_role(...)` y `set_user_role(...)` como ejemplos de procedimientos almacenados. El segundo exige el permiso `roles:manage` y evita revocar el último rol `admin`.
 
 El registro desde la API usa una transacción Prisma (`db.transaction`) para crear el usuario y asignarle el rol inicial como una operación atómica. Los procedimientos SQL son ejemplos para operaciones desde PostgreSQL; no se ejecutan automáticamente al iniciar la app. Las contraseñas deben llegar a PostgreSQL ya hasheadas con bcrypt.
+
+Ejemplos de ejecución desde PostgreSQL (la contraseña del procedimiento debe ser un hash bcrypt, nunca texto plano):
+
+```sql
+CALL create_user_with_default_role('nuevo-usuario', 'user@example.com', '<bcrypt-hash>', NULL);
+CALL set_user_role(1, 2, 'moderator', TRUE);
+```
+
+`set_user_role` requiere que el primer ID pertenezca a un usuario con `roles:manage`. El esquema revoca la ejecución pública de ambos procedimientos; si la app usa un rol de base de datos separado del propietario del esquema, concede explícitamente los permisos mínimos necesarios.
 
 ## Configuración
 
