@@ -1,14 +1,10 @@
+import type { AuthenticatedUser } from "./auth.interface.js";
+
 declare global {
   namespace Express {
-    interface User extends User_interface{}
+    interface User extends AuthenticatedUser {}
   }
 }
 
-export interface User_interface {
-  id: number;
-  username: string;
-  email: string;
-  password: string;
-  role: string;
-}
+export {};
 

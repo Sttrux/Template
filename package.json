@@ -1,44 +1,48 @@
 {
-  "name": "blog_api",
+  "name": "express-typescript-api-template",
   "version": "1.0.0",
-  "description": "API REST básica para un blog con Express y TypeScript",
-  "main": "dist/app.js",
+  "description": "Plantilla modular de API Express, TypeScript, PostgreSQL, Passport, JWT y RBAC",
+  "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/app.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node dist/server.js",
     "contract:emit": "prisma contract emit"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Sttrux/Blog_API.git"
+    "url": "git+https://github.com/Sttrux/Template.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Sttrux/Blog_API/issues"
+    "url": "https://github.com/Sttrux/Template/issues"
   },
-  "homepage": "https://github.com/Sttrux/Blog_API#readme",
+  "homepage": "https://github.com/Sttrux/Template#readme",
   "type": "module",
   "dependencies": {
     "@prisma/orm-postgres": "^8.0.0-rc.12",
-    "@quixo3/prisma-session-store": "^3.1.21",
     "bcryptjs": "^3.0.3",
+    "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.6",
     "dotenv": "^18.0.4",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.5",
     "express-session": "^1.19.0",
     "express-validator": "^7.3.2",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.4.0",
     "passport": "^0.7.0",
-    "passport-local": "^1.0.0"
+    "passport-local": "^1.0.0",
+    "pg": "^8.23.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@prisma/cli-engine": "^0.6.1",
     "@types/bcryptjs": "^2.4.6",
+    "@types/connect-pg-simple": "^7.0.3",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/express-session": "^1.19.0",
@@ -47,6 +51,7 @@
     "@types/node": "^26.6.3",
     "@types/passport": "^1.0.17",
     "@types/passport-local": "^1.0.38",
+    "@types/pg": "^8.23.1",
     "prisma": "^8.0.0-rc.17",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"

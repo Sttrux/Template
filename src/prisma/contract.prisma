@@ -1,40 +1,107 @@
 // use prisma-8
-// Contract inferred from the live database schema. Edit as needed, then run `prisma contract emit`.
 
 model Users {
-  id       Int          @id(map: "users_pkey") @default(autoincrement())
-  username String @unique(map: "users_username_key")
-  email    String @unique(map: "users_email_key")
-  password String
-  role     VarChar(50)  @default("user")
-  comments Comments[]
-  posts    Posts[]
+  id                 Int            @id @default(autoincrement())
+  username           String         @unique
+  email              String         @unique
+  passwordHash       String         @map("password_hash")
+  createdAt          Timestamp      @default(now()) @map("created_at")
+  updatedAt          Timestamp      @default(now()) @map("updated_at")
+  userRoles          UserRoles[]
+  posts              Posts[]
+  comments           Comments[]
+  roleAuditsAsActor  RoleAuditLogs[] @relation("RoleAuditActor")
+  roleAuditsReceived RoleAuditLogs[] @relation("RoleAuditTarget")
 
   @@map("users")
 }
 
+model Roles {
+  id              Int               @id @default(autoincrement())
+  name            String            @unique
+  description     String
+  userRoles       UserRoles[]
+  rolePermissions RolePermissions[]
+  auditLogs       RoleAuditLogs[]
+
+  @@map("roles")
+}
+
+model Permissions {
+  id              Int               @id @default(autoincrement())
+  name            String            @unique
+  description     String
+  rolePermissions RolePermissions[]
+
+  @@map("permissions")
+}
+
+model UserRoles {
+  userId     Int       @map("user_id")
+  roleId     Int       @map("role_id")
+  assignedAt Timestamp @default(now()) @map("assigned_at")
+  user       Users     @relation(fields: [userId], references: [id])
+  role       Roles     @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermissions {
+  roleId       Int         @map("role_id")
+  permissionId Int         @map("permission_id")
+  role         Roles       @relation(fields: [roleId], references: [id])
+  permission   Permissions @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model RoleAuditLogs {
+  id           Int       @id @default(autoincrement())
+  actorUserId  Int?      @map("actor_user_id")
+  targetUserId Int?      @map("target_user_id")
+  roleId       Int?
+  action       String
+  changedAt    Timestamp @default(now()) @map("changed_at")
+  actor        Users?    @relation("RoleAuditActor", fields: [actorUserId], references: [id])
+  target       Users?    @relation("RoleAuditTarget", fields: [targetUserId], references: [id])
+  role         Roles?    @relation(fields: [roleId], references: [id])
+
+  @@map("role_audit_logs")
+}
+
 model Posts {
-  id        Int          @id(map: "posts_pkey") @default(autoincrement())
-  authorId  Int          @map("author_id")
+  id        Int       @id @default(autoincrement())
+  authorId  Int       @map("author_id")
   title     String
   content   String
-  likes     Int          @default(0)
-  published Boolean      @default(false)
-  createdAt Timestamp    @default(now()) @map("created_at")
-  updatedAt Timestamp    @default(now()) @map("updated_at")
+  likes     Int       @default(0)
+  published Boolean   @default(false)
+  createdAt Timestamp @default(now()) @map("created_at")
+  updatedAt Timestamp @default(now()) @map("updated_at")
   comments  Comments[]
-  author    Users        @relation(fields: [authorId], references: [id], map: "posts_author_id_fkey", index: false)
+  author    Users     @relation(fields: [authorId], references: [id])
 
   @@map("posts")
 }
 
 model Comments {
-  id        Int       @id(map: "comments_pkey") @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   authorId  Int       @map("author_id")
   postId    Int       @map("post_id")
+  content   String
   createdAt Timestamp @default(now()) @map("created_at")
-  author    Users     @relation(fields: [authorId], references: [id], map: "comments_author_id_fkey", index: false)
-  post      Posts     @relation(fields: [postId], references: [id], map: "comments_post_id_fkey", index: false)
+  author    Users     @relation(fields: [authorId], references: [id])
+  post      Posts     @relation(fields: [postId], references: [id])
 
   @@map("comments")
+}
+
+model Sessions {
+  sid    String    @id
+  sess   Json
+  expire Timestamp
+
+  @@map("sessions")
 }
